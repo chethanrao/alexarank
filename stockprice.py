@@ -11,24 +11,32 @@ def getMapFromCSV(file):
 	return map	
 	
 map=getMapFromCSV("stocksweburl.csv")
-stock=input('Enter the stock\n')
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
-if len(stock)>1:
-	url=map[stock.lower()]
-	alexaurl="http://data.alexa.com/data?cli=10&url="+url
-	response=urllib.request.urlopen(alexaurl,context=ctx)
-	if response.getcode()==200:
-		tree=ET.fromstring(response.read().decode())
-		rank=tree.find('.//RANK')
-		if int(rank.get('DELTA'))>0:
-			print("buy")
-		else if int(rank.get('DELTA'))==0:
-			print("no recommendation at this point of time")
+while True:
+	try:
+		stock=input('Enter the stock\n')
+		if len(stock)>1:
+			if stock.lower() not in map:
+				print("stock not found in csv")
+				continue
+			url=map[stock.lower()]
+			alexaurl="http://data.alexa.com/data?cli=10&url="+url
+			response=urllib.request.urlopen(alexaurl,context=ctx)
+			if response.getcode()==200:
+				tree=ET.fromstring(response.read().decode())
+				rank=tree.find('.//RANK')
+				if int(rank.get('DELTA'))>0:
+					print("buy")
+				elif int(rank.get('DELTA'))==0:
+					print("no recommendation at this point of time")
+				else:
+					print("do not buy")
+			else:
+				print("wrong response code expected 200 found:"+response.getcode())
 		else:
-			print("do not buy")
-	else:
-		print("wrong response code expected 200 found:"+response.getcode())
-else:
-	print("stock not found")
+			break;
+	except:
+		print("unexpected error", sys.exc_info()[0])
+		raise
